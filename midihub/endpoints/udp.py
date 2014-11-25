@@ -9,7 +9,7 @@ def parse_addr(addr):
         (hostname, port) = addr.split(':')
         return (hostname, int(port))
     except ValueError:
-        raise ValueError(addr + " does not look like an address")
+        raise ValueError("%r does not look like an address" % addr)
 
 
 class UDPSerializer(object):

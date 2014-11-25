@@ -5,16 +5,25 @@ import traceback
 
 import midihub.simple_logging as logging
 
+
+def import_module(name):
+    for module_path in (name, 'midihub.endpoints.' + name):
+        try:
+            return importlib.import_module(module_path)
+        except ImportError as e:
+            if e.message != 'No module named ' + name:
+                raise
+    raise ImportError("Unrecognized MIDI endpoint: module %s not found" % name)
+
 def make_midi_dst(arg):
     if arg == '-':
         arg = 'pipe:'
     elif ':' not in arg:
         arg = 'smf://' + arg
     (scheme, arg) = arg.split(':', 1)
-    try:
-        module = importlib.import_module('midihub.endpoints.' + scheme)
-    except ImportError:
-        raise ImportError("Unrecognized MIDI sink: module midihub.endpoints.%s not found" % scheme)
+    module = import_module(scheme)
+    if not hasattr(module, 'make_dst'):
+        raise RuntimeError("%r does not define a MIDI sink" % module)
     return module.make_dst(arg[2:])
 
 
@@ -36,11 +45,10 @@ def main(args):
         elif ':' not in src:
             src = 'smf://' + src
         (scheme, arg) = src.split(':', 1)
-        try:
-            module = importlib.import_module('midihub.endpoints.' + scheme)
-            module.run_src(arg[2:], emit)
-        except ImportError:
-            raise ImportError("Unrecognized MIDI source: module midihub.endpoints.%s not found" % scheme)
+        module = import_module(scheme)
+        if not hasattr(module, 'run_src'):
+            raise RuntimeError("%r does not define a MIDI source" % module)
+        module.run_src(arg[2:], emit)
     finally:
         for s in sinks: s.eof()
 
