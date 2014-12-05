@@ -34,10 +34,13 @@ def main(args):
     if args.path:
         sys.path.insert(0, args.path)
     sinks = map(make_midi_dst, args.dst)
-    def emit(*a, **k):
+    def emit(code, *args):
+        if code == 0x90 and args[1] == 0:  # sometimes note_off arrives as note_on with vel=0
+            code = 0x80
+            args = (args[0],)
         for s in sinks[:]:
             try:
-                s.emit(*a, **k)
+                s.emit(code, *args)
             except Exception:
                 traceback.print_exc()
                 sinks.remove(s)
@@ -55,7 +58,12 @@ def main(args):
             raise RuntimeError("%r does not define a MIDI source" % module)
         module.run_src(arg[2:], emit)
     finally:
-        for s in sinks: s.eof()
+        for s in sinks:
+            try:
+                if hasattr(s, 'eof'):
+                    s.eof()
+            except Exception:
+                traceback.print_exc()
 
 
 if __name__ == '__main__':
