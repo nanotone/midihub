@@ -10,7 +10,9 @@ import midihub.simple_logging as logging
 def import_module(name):
     for module_path in (name, 'midihub.endpoints.' + name):
         try:
-            return importlib.import_module(module_path)
+            module = importlib.import_module(module_path)
+            logging.info("Imported %s from %s", module.__name__, module.__file__)
+            return module
         except ImportError as e:
             if e.message != 'No module named ' + name:
                 raise
