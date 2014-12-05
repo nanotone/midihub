@@ -41,11 +41,14 @@ def main(args):
         for s in sinks[:]:
             try:
                 s.emit(code, *args)
-            except Exception:
-                traceback.print_exc()
+            except Exception as e:
+                if not isinstance(e, StopIteration):
+                    traceback.print_exc()
+                try: s.eof()
+                except Exception: pass
                 sinks.remove(s)
                 if not sinks:
-                    logging.warning("No more MIDI sinks!")
+                    raise StopIteration()
     try:
         src = args.src
         if src == '-':
@@ -57,6 +60,7 @@ def main(args):
         if not hasattr(module, 'run_src'):
             raise RuntimeError("%r does not define a MIDI source" % module)
         module.run_src(arg[2:], emit)
+    except StopIteration: pass
     finally:
         for s in sinks:
             try:
@@ -71,5 +75,5 @@ if __name__ == '__main__':
     parser = argparse.ArgumentParser()
     parser.add_argument('--path', help="dir to add to endpoint module search path (often .)")
     parser.add_argument('src', help="- (stdin) | .mid file | midi: (realtime)")
-    parser.add_argument('dst', nargs='*', help="- (stdout) | .mid file | udp://HOST | fluid:")
+    parser.add_argument('dst', nargs='+', help="- (stdout) | .mid file | udp://HOST | fluid: | midi: (realtime)")
     main(parser.parse_args())
