@@ -3,7 +3,7 @@ import sys
 from setuptools import setup, find_packages
 
 
-requires = ['rtmidi-python==0.2.2']
+requires = ['mido==1.1.12']
 
 if sys.version_info[:2] == (2, 6):
     # For python2.6 we have to require argparse since it
