@@ -1,59 +1,63 @@
-import rtmidi_python as rtmidi
+import mido
 
 import midihub.simple_logging as logging
 
 
-class RtMidiIn(object):
+mido_kwargs = {
+    0x80: ['note'],
+    0x90: ['note', 'velocity'],
+    0xB0: ['control', 'value'],
+}
+
+class MidiIn(object):
     def __init__(self, emit):
         self.emit = emit
-        self.mi = rtmidi.MidiIn()
-        ports = self.mi.ports
-        if not ports:
+        port_names = mido.get_input_names()
+        if not port_names:
             raise IndexError("No MIDI input ports found")
-        if len(ports) == 1:
+        if len(port_names) == 1:
             idx = 0
-            logging.info("Choosing MIDI input port %s", ports[0])
+            logging.info("Choosing MIDI input port %s", port_names[0])
         else:
             print "MIDI input ports:"
-            for (idx, name) in enumerate(ports):
+            for (idx, name) in enumerate(port_names):
                 print "%s. %s" % (idx, name)
             idx = int(raw_input("Which MIDI input port? "))
-            assert 0 <= idx < len(ports)
-        self.mi.open_port(idx)
+            assert 0 <= idx < len(port_names)
+        self.midi_in = mido.open_input(port_names[idx])
 
     def run(self):
-        while True:
-            (message, delta_time) = self.mi.get_message()
-            if message:
-                self.emit(*message)
+        for message in self.midi_in:
+            code = mido.messages.get_spec(message.type).status_byte
+            kwarg_names = mido_kwargs.get(code)
+            if kwarg_names:
+                self.emit(code, *[getattr(message, kwarg_name) for kwarg_name in kwarg_names])
 
-class RtMidiOut(object):
-    def __init__(self): #, emit):
-        #self.emit = emit
-        self.mo = rtmidi.MidiOut()
-        ports = self.mo.ports
-        if not ports:
+class MidiOut(object):
+    def __init__(self):
+        port_names = mido.get_output_names()
+        if not port_names:
             raise IndexError("No MIDI output ports found")
-        if len(ports) == 1:
+        if len(port_names) == 1:
             idx = 0
-            logging.info("Choosing MIDI output port %s", ports[0])
+            logging.info("Choosing MIDI output port %s", port_names[0])
         else:
             print "MIDI output ports:"
-            for (idx, name) in enumerate(ports):
+            for (idx, name) in enumerate(port_names):
                 print "%s. %s" % (idx, name)
             idx = int(raw_input("Which MIDI output port? "))
-            assert 0 <= idx < len(ports)
-        self.mo.open_port(idx)
+            assert 0 <= idx < len(port_names)
+        self.midi_out = mido.open_output(port_names[idx])
 
     def emit(self, code, *args):
-        self.mo.send_message([code] + list(args))
-
-    def eof(self):
-        pass
+        kwarg_names = mido_kwargs.get(code)
+        if kwarg_names:
+            kwargs = {kwarg_name: args[i] for (i, kwarg_name) in enumerate(kwarg_names)}
+            self.midi_out.send(mido.Message(mido.messages.get_spec(code).type, **kwargs))
 
 
 def run_src(arg, emit):
-    RtMidiIn(emit).run()
+    MidiIn(emit).run()
 
 def make_dst(arg):
-    return RtMidiOut()
+    return MidiOut()
