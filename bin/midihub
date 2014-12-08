@@ -60,7 +60,7 @@ def main(args):
         if not hasattr(module, 'run_src'):
             raise RuntimeError("%r does not define a MIDI source" % module)
         module.run_src(arg[2:], emit)
-    except StopIteration: pass
+    except (KeyboardInterrupt, StopIteration): pass
     finally:
         for s in sinks:
             try:
