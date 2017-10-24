@@ -38,7 +38,7 @@ class SMFReader(MidiOutStream):
         self.tempi.append([self.abs_time(), value * self.quarters_per_tick])
 
     def sysex_event(self, *args):
-        print "wat", args
+        print("wat", args)
 
     def eof(self):
         self.tempi.sort()

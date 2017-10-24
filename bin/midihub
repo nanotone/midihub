@@ -13,10 +13,10 @@ def import_module(name):
             module = importlib.import_module(module_path)
             logging.info("Imported %s from %s", module.__name__, module.__file__)
             return module
-        except ImportError as e:
-            if e.message != 'No module named ' + name:
+        except ModuleNotFoundError as e:
+            if not (e.msg.startswith("No module") and module_path.startswith(e.name)):
                 raise
-    raise ImportError("Unrecognized MIDI endpoint: module %s not found" % name)
+    raise ModuleNotFoundError("Unrecognized MIDI endpoint: No module named '{}'".format(name))
 
 def make_midi_dst(arg):
     if arg == '-':

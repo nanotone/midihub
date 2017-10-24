@@ -19,9 +19,9 @@ class MidiIn(object):
             idx = 0
             logging.info("Choosing MIDI input port %s", port_names[0])
         else:
-            print "MIDI input ports:"
+            print("MIDI input ports:")
             for (idx, name) in enumerate(port_names):
-                print "%s. %s" % (idx, name)
+                print("{}. {}".format(idx, name))
             idx = int(raw_input("Which MIDI input port? "))
             assert 0 <= idx < len(port_names)
         self.midi_in = mido.open_input(port_names[idx])
@@ -42,9 +42,9 @@ class MidiOut(object):
             idx = 0
             logging.info("Choosing MIDI output port %s", port_names[0])
         else:
-            print "MIDI output ports:"
+            print("MIDI output ports:")
             for (idx, name) in enumerate(port_names):
-                print "%s. %s" % (idx, name)
+                print("{}. {}".format(idx, name))
             idx = int(raw_input("Which MIDI output port? "))
             assert 0 <= idx < len(port_names)
         self.midi_out = mido.open_output(port_names[idx])
