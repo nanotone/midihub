@@ -467,5 +467,3 @@ if __name__ == '__main__':
     midiOut.update_time(0,0)
     midiOut.note_on(0, 63, 127)
     midiOut.note_off(0, 63, 127)
-
-    
